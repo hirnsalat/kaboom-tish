@@ -22,23 +22,44 @@ function resolveSound(
 }
 
 function beatScheduler(k: K.KaboomCtx): ((bpm: number) => void) {
-  let started = false;
+  // debug level 1 -> infrequent events
+  // debug level 2 -> log every frame
   let debug = 1;
+
+  let running = false;
   let scheduledUntil = 0;
   let scheduledBeat = 0;
 
+  // number of seconds between frames to detect game pause
+  let pauseThreshold = 0.2;
+
   return (bpm: number) => {
+    let currentTime = k.audioCtx.currentTime
+    let dt = k.dt();
 
-    if (!started) {
-      scheduledUntil = k.audioCtx.currentTime;
-      started = true;
+    if (!running && dt > pauseThreshold) return;
+
+    if (!running) {
+      if (debug >= 1) console.log("starting scheduler at " + currentTime + ", dt=" + dt)
+      scheduledUntil = currentTime;
+      running = true;
     }
 
-    if (debug >= 1 && scheduledUntil < k.audioCtx.currentTime) {
-      console.log("scheduling underrun by " + (k.audioCtx.currentTime - scheduledUntil));
+    if (scheduledUntil < currentTime) {
+      let underrunBy = currentTime - scheduledUntil;
+
+      if (debug >= 1) {
+        console.log("scheduling underrun by " + underrunBy);
+      }
+
+      if (underrunBy > pauseThreshold) {
+        if (debug >= 1) console.log("pausing scheduler")
+        running = false;
+        return;
+      }
     }
 
-    let targetTime = k.audioCtx.currentTime + k.dt() * 4;
+    let targetTime = currentTime + dt * 4;
     let timeDiff = targetTime - scheduledUntil;
 
     if (timeDiff < 0) return;
