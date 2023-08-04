@@ -84,7 +84,7 @@ function beatScheduler(k: K.KaboomCtx): ((bpm: number) => void) {
 }
 
 // plugin!
-export function audioPlugin(k: K.KaboomCtx) {
+export function kaboomTishPlugin(k: K.KaboomCtx) {
   let bpm = 120;
   let scheduler = beatScheduler(k);
   let masterGain = k.audioCtx.createGain();
@@ -189,4 +189,4 @@ export function audioPlugin(k: K.KaboomCtx) {
   };
 }
 
-export default audioPlugin;
+export default kaboomTishPlugin;

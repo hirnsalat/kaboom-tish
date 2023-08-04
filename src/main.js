@@ -1,8 +1,8 @@
 import kaboom from "kaboom";
-import audioPlugin from "./kaboom-audio";
+import kaboomTish from "./kaboom-tish";
 
 const k = kaboom({
-  plugins: [audioPlugin],
+  plugins: [kaboomTish],
 });
 
 k.loadSprite("bean", "sprites/bean.png");
