@@ -36,6 +36,7 @@ function beatScheduler(k: K.KaboomCtx): ((bpm: number) => void) {
   return (bpm: number) => {
     let currentTime = k.audioCtx.currentTime
     let dt = k.dt();
+    let lookahead = dt * 10;
 
     if (!running && dt > pauseThreshold) return;
 
@@ -59,7 +60,7 @@ function beatScheduler(k: K.KaboomCtx): ((bpm: number) => void) {
       }
     }
 
-    let targetTime = currentTime + dt * 4;
+    let targetTime = currentTime + lookahead;
     let timeDiff = targetTime - scheduledUntil;
 
     if (timeDiff < 0) return;
@@ -98,8 +99,12 @@ export function audioPlugin(k: K.KaboomCtx) {
     },
 
     beat() {
+      const beats: number[] = [];
+
       return {
         id: "beat",
+
+        isBeat: false,
 
         schedule(fromT: number, toT: number, fromB: number, toB: number) {
           let timeDiff = toT - fromT;
@@ -122,6 +127,7 @@ export function audioPlugin(k: K.KaboomCtx) {
 
             if (this.playAt) {
               this.playAt(nextTime);
+              beats.push(nextTime);
             }
 
             currentB = nextBeat;
@@ -138,6 +144,11 @@ export function audioPlugin(k: K.KaboomCtx) {
         },
 
         update() {
+          this.isBeat = false;
+          if (beats[0] < k.audioCtx.currentTime) {
+            this.isBeat = true;
+            beats.shift();
+          }
         },
       };
     },
