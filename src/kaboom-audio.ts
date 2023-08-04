@@ -160,7 +160,7 @@ export function audioPlugin(k: K.KaboomCtx) {
       };
     },
 
-    plays(sound: string | K.SoundData | K.Asset<K.SoundData>) {
+    sample(sound: string | K.SoundData | K.Asset<K.SoundData>) {
       let ctx = k.audioCtx;
       let destination = masterGain;
       let buffer: AudioBuffer;
