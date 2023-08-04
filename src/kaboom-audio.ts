@@ -87,9 +87,16 @@ function beatScheduler(k: K.KaboomCtx): ((bpm: number) => void) {
 export function audioPlugin(k: K.KaboomCtx) {
   let bpm = 120;
   let scheduler = beatScheduler(k);
+  let masterGain = k.audioCtx.createGain();
+
+  masterGain.connect(k.audioCtx.destination);
 
   k.onUpdate(() => {
     scheduler(bpm);
+  })
+
+  k.onUpdate(() => {
+    masterGain.gain.value = k.volume();
   })
 
   return {
@@ -155,7 +162,7 @@ export function audioPlugin(k: K.KaboomCtx) {
 
     plays(sound: string | K.SoundData | K.Asset<K.SoundData>) {
       let ctx = k.audioCtx;
-      let destination = ctx.destination;
+      let destination = masterGain;
       let buffer: AudioBuffer;
       // const gainNode = ctx.createGain();
 
