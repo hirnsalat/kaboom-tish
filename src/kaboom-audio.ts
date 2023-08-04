@@ -21,16 +21,53 @@ function resolveSound(
   }
 }
 
+function beatScheduler(k: K.KaboomCtx): ((bpm: number) => void) {
+  let started = false;
+  let debug = 1;
+  let scheduledUntil = 0;
+  let scheduledBeat = 0;
+
+  return (bpm: number) => {
+
+    if (!started) {
+      scheduledUntil = k.audioCtx.currentTime;
+      started = true;
+    }
+
+    if (debug >= 1 && scheduledUntil < k.audioCtx.currentTime) {
+      console.log("scheduling underrun by " + (k.audioCtx.currentTime - scheduledUntil));
+    }
+
+    let targetTime = k.audioCtx.currentTime + k.dt() * 4;
+    let timeDiff = targetTime - scheduledUntil;
+
+    if (timeDiff < 0) return;
+
+    let beatDiff = bpm * (timeDiff / 60);
+    let targetBeat = scheduledBeat + beatDiff;
+
+    if (debug >= 2) {
+      console.log("scheduling beats " + scheduledBeat + " to " + targetBeat + " from " + scheduledUntil + " to " + targetTime);
+    }
+
+    k.get("beat").forEach(
+      (o) => {
+        o.schedule(scheduledUntil, targetTime, scheduledBeat, targetBeat);
+      }
+    )
+
+    scheduledUntil = targetTime;
+    scheduledBeat = targetBeat;
+  }
+}
+
 // plugin!
 export function audioPlugin(k: K.KaboomCtx) {
   let bpm = 120;
+  let scheduler = beatScheduler(k);
 
   k.onUpdate(() => {
-    let targetTime = k.audioCtx.currentTime + k.dt() * 3;
-    k.get("beat").forEach(
-      (o) => {
-        o.scheduleTo(targetTime);
-      })
+    scheduler(bpm);
   })
 
   return {
@@ -40,26 +77,23 @@ export function audioPlugin(k: K.KaboomCtx) {
     },
 
     beat() {
-      let scheduledUntil = 0;
-      let scheduledBeat = 0;
-
-
       return {
         id: "beat",
 
-        scheduleTo(time: number) {
-          let timeDiff = time - scheduledUntil;
+        schedule(fromT: number, toT: number, fromB: number, toB: number) {
+          let timeDiff = toT - fromT;
+          let beatDiff = toB - fromB;
 
-          if (timeDiff < 0) return;
+          let beatTarget = toB;
 
-          let beatDiff = bpm * (timeDiff / 60);
-          let beatTarget = scheduledBeat + beatDiff;
+          let nextBeat = Math.ceil(fromB);
 
-          let nextBeat = Math.ceil(scheduledBeat);
+          let currentT = fromT;
+          let currentB = fromB;
 
           while (nextBeat < beatTarget) {
-            let toNextBeat = nextBeat - scheduledBeat;
-            let nextTime = scheduledUntil + (toNextBeat * timeDiff) / beatDiff;
+            let toNextBeat = nextBeat - currentB;
+            let nextTime = currentT + (toNextBeat * timeDiff) / beatDiff;
 
             //console.log("timediff: " + timeDiff);
             //console.log("beatdiff: " + beatDiff);
@@ -69,12 +103,10 @@ export function audioPlugin(k: K.KaboomCtx) {
               this.playAt(nextTime);
             }
 
+            currentB = nextBeat;
+            currentT = nextTime;
             nextBeat += 1;
-            scheduledUntil = nextTime;
           }
-
-          scheduledUntil = time;
-          scheduledBeat = beatTarget;
         },
 
         inspect() {
@@ -82,7 +114,6 @@ export function audioPlugin(k: K.KaboomCtx) {
         },
 
         add() {
-          scheduledUntil = k.audioCtx.currentTime;
         },
 
         update() {
