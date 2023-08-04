@@ -1,27 +1,4 @@
-# Folder structure
+# kaboom-tish!
 
-- `src` - source code for your kaboom project
-- `www` - distribution folder, contains your index.html, built js bundle and static assets
+This is the Timing & Interactive Sound Helper for kaboom.js! It's a plugin that helps with scheduling sound, generating music, influencing audio from game logic, and more!
 
-
-## Development
-
-```sh
-$ npm run dev
-```
-
-will start a dev server at http://localhost:8000
-
-## Distribution
-
-```sh
-$ npm run build
-```
-
-will build your js files into `www/main.js`
-
-```sh
-$ npm run bundle
-```
-
-will build your game and package into a .zip file, you can upload to your server or itch.io / newground etc.
