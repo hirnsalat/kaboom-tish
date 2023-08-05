@@ -94,6 +94,13 @@ export function kaboomTishPlugin(k: K.KaboomCtx): T.KaboomTishPlugin {
 
   masterGainNode.connect(k.audioCtx.destination);
 
+  k.onLoad(() => {
+    let bufferSrc = k.audioCtx.createBufferSource();
+    bufferSrc.connect(masterGainNode);
+    bufferSrc.start();
+    console.log("starting audio?!?");
+  })
+
   k.onUpdate(() => {
     scheduler(bpm);
   })
@@ -191,6 +198,7 @@ export function kaboomTishPlugin(k: K.KaboomCtx): T.KaboomTishPlugin {
         inputNode: AudioNode,
         outputNode: AudioNode,
         targetNode: AudioNode,
+        gainManaged: false,
 
         rewire(target: AudioNode) {
           if (this.targetNode == target) return;
@@ -218,10 +226,44 @@ export function kaboomTishPlugin(k: K.KaboomCtx): T.KaboomTishPlugin {
         volume(vol?: number): number {
           if (vol != undefined) {
             localVolume = vol;
-            this.outputNode.gain.value = vol;
+            if (!this.gainManaged) {
+              this.outputNode.gain.value = vol;
+            }
           }
           return localVolume;
         }
+      }
+    },
+
+    volumeEnvelope() {
+      let schedulerEvent: K.EventController;
+
+      return {
+        id: "volumeEnvelope",
+        require: ["sound", "audio"],
+
+        add() {
+          if (this.onSchedule) {
+            schedulerEvent = this.onSchedule((time) => {
+              let gainParam = this.outputNode.gain;
+              gainParam.cancelScheduledValues(time);
+              gainParam.setValueAtTime(0, time);
+              gainParam.linearRampToValueAtTime(this.volume(), time + 0.01);
+              gainParam.linearRampToValueAtTime(0, time + 0.1);
+            });
+            this.gainManaged = true;
+          }
+        },
+
+        update() {
+        },
+
+        destroy() {
+          if (schedulerEvent) {
+            schedulerEvent.cancel();
+          }
+          this.gainManaged = false;
+        },
       }
     },
 
@@ -254,7 +296,7 @@ export function kaboomTishPlugin(k: K.KaboomCtx): T.KaboomTishPlugin {
       const snd = resolveSound(k, sound);
       snd.onLoad(start);
 
-      function playSoundAt(time) {
+      function playSoundAt(time: number | undefined) {
         let srcNode = ctx.createBufferSource();
         srcNode.connect(destination);
         srcNode.buffer = buffer;
@@ -282,6 +324,29 @@ export function kaboomTishPlugin(k: K.KaboomCtx): T.KaboomTishPlugin {
           }
         },
       };
+    },
+
+    oscillator() {
+      let oscNode = k.audioCtx.createOscillator();
+      let started = false;
+
+      return {
+        id: "oscillator",
+        require: ["audio"],
+
+        add() {
+          oscNode.type = "sawtooth";
+          oscNode.frequency.value = 55;
+        },
+
+        update() {
+          oscNode.connect(this.inputNode);
+          if (!started) {
+            oscNode.start();
+            started = true;
+          }
+        },
+      }
     },
   };
 }
