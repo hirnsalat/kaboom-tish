@@ -18,6 +18,7 @@ export interface KaboomTishPlugin {
   tempo(newTempo?: number): number,
   beat(opt?: BeatCompOpt): BeatComp,
   sample(sound: KaboomSound): SampleComp,
+  sound(): any,
 }
 
 export interface BeatCompOpt {
@@ -29,7 +30,7 @@ export interface BeatComp {
   isBeat: boolean,
   bar: number,
   subdivision: number,
-  onSchedule(action: (time: number) => void): K.EventController,
+  //  onSchedule(action: (time: number) => void): K.EventController,
 }
 
 export interface SampleComp {

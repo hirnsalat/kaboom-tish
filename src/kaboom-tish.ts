@@ -149,7 +149,7 @@ export function kaboomTishPlugin(k: K.KaboomCtx): T.KaboomTishPlugin {
             //console.log("beatdiff: " + beatDiff);
             //console.log("scheduling beat " + nextBeat + " at " + nextTime);
 
-            this.trigger("schedule", nextTime);
+            if (this.playSound) this.playSound(nextTime);
 
             scheduledBeats.push(nextTime);
 
@@ -180,10 +180,22 @@ export function kaboomTishPlugin(k: K.KaboomCtx): T.KaboomTishPlugin {
           }
         },
 
+      };
+    },
+
+    sound() {
+      return {
+        id: "sound",
+
         onSchedule(action: (time: number) => void): K.EventController {
           return this.on("schedule", action);
-        }
-      };
+        },
+
+        playSound(time?: number) {
+          if (!time) time = 0;
+          this.trigger("schedule", time);
+        },
+      }
     },
 
     sample(sound: string | K.SoundData | K.Asset<K.SoundData>, playbackRate?: number) {
@@ -191,6 +203,7 @@ export function kaboomTishPlugin(k: K.KaboomCtx): T.KaboomTishPlugin {
       let destination = masterGain;
       let buffer: AudioBuffer;
       // const gainNode = ctx.createGain();
+      let schedulerEvent: K.EventController;
 
       function start(data: K.SoundData) {
         buffer = data.buf;
@@ -199,19 +212,28 @@ export function kaboomTishPlugin(k: K.KaboomCtx): T.KaboomTishPlugin {
       const snd = resolveSound(k, sound);
       snd.onLoad(start);
 
+      function playSoundAt(time) {
+        let srcNode = ctx.createBufferSource();
+        srcNode.connect(destination);
+        srcNode.buffer = buffer;
+        srcNode.playbackRate.value = playbackRate ? playbackRate : 1;
+        srcNode.start(time);
+      }
+
       return {
-        id: "plays",
+        id: "sample",
+        require: ["sound"],
 
         add() {
-          this.onSchedule(this.playAt);
+          if (this.onSchedule) {
+            schedulerEvent = this.onSchedule(playSoundAt);
+          }
         },
 
-        playAt(t: number) {
-          let srcNode = ctx.createBufferSource();
-          srcNode.connect(destination);
-          srcNode.buffer = buffer;
-          srcNode.playbackRate.value = playbackRate ? playbackRate : 1;
-          srcNode.start(t);
+        destroy() {
+          if (schedulerEvent) {
+            schedulerEvent.cancel();
+          }
         },
       };
     },

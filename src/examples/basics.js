@@ -16,6 +16,8 @@ const dog1 = k.add([
   k.anchor("center"),
   k.scale(2),
 
+  // be a sound that can be played!
+  k.sound(),
   // use beat() to play a sound each beat!
   k.beat(),
   // sample plays an audio file!
@@ -29,6 +31,7 @@ const dog2 = k.add([
   k.anchor("center"),
   k.scale(-1, 1),
 
+  k.sound(),
   // you can subdivide the beat to create different rhythms!
   k.beat({ bar: 4, subdivision: 3 }),
   k.sample("bark"),
@@ -45,6 +48,7 @@ const dog3 = dog2.add([
   k.beat({ subdivision: 2 }),
   // sample plays an audio file!
   k.sample("bark", 2),
+  k.sound(),
 ]);
 
 
