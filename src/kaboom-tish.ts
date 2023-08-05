@@ -83,6 +83,11 @@ function beatScheduler(k: K.KaboomCtx): ((bpm: number) => void) {
   }
 }
 
+export interface BeatOpt {
+  bar?: number,
+  subdivision?: number,
+}
+
 // plugin!
 export function kaboomTishPlugin(k: K.KaboomCtx) {
   let bpm = 120;
@@ -105,15 +110,29 @@ export function kaboomTishPlugin(k: K.KaboomCtx) {
       else return bpm;
     },
 
-    beat() {
-      const beats: number[] = [];
+    beat(opt?: BeatOpt) {
+      const scheduledBeats: number[] = [];
+
+      if (!opt) opt = {};
+
+      function transformBeat(beatComp, beat): number {
+        let bar = beatComp.bar;
+        let subdivision = beatComp.subdivision;
+
+        return beat * subdivision / bar;
+      }
 
       return {
         id: "beat",
 
         isBeat: false,
+        bar: opt.bar ? opt.bar : 1,
+        subdivision: opt.subdivision ? opt.subdivision : 1,
 
         schedule(fromT: number, toT: number, fromB: number, toB: number) {
+          fromB = transformBeat(this, fromB);
+          toB = transformBeat(this, toB);
+
           let timeDiff = toT - fromT;
           let beatDiff = toB - fromB;
 
@@ -134,17 +153,23 @@ export function kaboomTishPlugin(k: K.KaboomCtx) {
 
             if (this.playAt) {
               this.playAt(nextTime);
-              beats.push(nextTime);
+              scheduledBeats.push(nextTime);
             }
 
             currentB = nextBeat;
             currentT = nextTime;
             nextBeat += 1;
           }
+
+          this.get("beat").forEach(
+            (o) => {
+              o.schedule(fromT, toT, fromB, toB);
+            }
+          )
         },
 
         inspect() {
-          return bpm;
+          return this.isBeat ? "*" : ".";
         },
 
         add() {
@@ -152,15 +177,15 @@ export function kaboomTishPlugin(k: K.KaboomCtx) {
 
         update() {
           this.isBeat = false;
-          if (beats[0] < k.audioCtx.currentTime) {
+          if (scheduledBeats[0] < k.audioCtx.currentTime) {
             this.isBeat = true;
-            beats.shift();
+            scheduledBeats.shift();
           }
         },
       };
     },
 
-    sample(sound: string | K.SoundData | K.Asset<K.SoundData>) {
+    sample(sound: string | K.SoundData | K.Asset<K.SoundData>, playbackRate?: number) {
       let ctx = k.audioCtx;
       let destination = masterGain;
       let buffer: AudioBuffer;
@@ -182,6 +207,7 @@ export function kaboomTishPlugin(k: K.KaboomCtx) {
           let srcNode = ctx.createBufferSource();
           srcNode.connect(destination);
           srcNode.buffer = buffer;
+          srcNode.playbackRate.value = playbackRate ? playbackRate : 1;
           srcNode.start(t);
         },
       };
