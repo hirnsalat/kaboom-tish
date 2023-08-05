@@ -12,7 +12,7 @@ k.loadSound("bark", "/sounds/dog.wav");
 k.volume(0.2);
 
 k.add([
-  k.beat({ bar: 4, subdivision: 16 }),
+  k.beat({ bar: 4, subdivision: 4 }),
   k.audio(),
   k.sound(),
   k.oscillator(),

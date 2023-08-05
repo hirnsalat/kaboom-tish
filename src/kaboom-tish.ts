@@ -237,6 +237,8 @@ export function kaboomTishPlugin(k: K.KaboomCtx): T.KaboomTishPlugin {
 
     volumeEnvelope() {
       let schedulerEvent: K.EventController;
+      let attack = 0.01;
+      let decay = 0.1;
 
       return {
         id: "volumeEnvelope",
@@ -247,9 +249,10 @@ export function kaboomTishPlugin(k: K.KaboomCtx): T.KaboomTishPlugin {
             schedulerEvent = this.onSchedule((time) => {
               let gainParam = this.outputNode.gain;
               gainParam.cancelScheduledValues(time);
-              gainParam.setValueAtTime(0, time);
-              gainParam.linearRampToValueAtTime(this.volume(), time + 0.01);
-              gainParam.linearRampToValueAtTime(0, time + 0.1);
+              // gainParam.setValueAtTime(0, time);
+              // gainParam.linearRampToValueAtTime(this.volume(), time + attack);
+              gainParam.setTargetAtTime(this.volume(), time, attack / 3);
+              gainParam.setTargetAtTime(0, time + attack, decay);
             });
             this.gainManaged = true;
           }
