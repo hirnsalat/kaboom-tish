@@ -1,6 +1,8 @@
 import * as K from "kaboom";
+import * as T from "./kaboom-tish-types";
 
 // utilities
+// there might be a bug here, in that only string sounds work
 function resolveSound(
   k: K.KaboomCtx,
   src: any,
@@ -84,13 +86,8 @@ function beatScheduler(k: K.KaboomCtx): ((bpm: number) => void) {
   }
 }
 
-export interface BeatOpt {
-  bar?: number,
-  subdivision?: number,
-}
-
 // plugin!
-export function kaboomTishPlugin(k: K.KaboomCtx) {
+export function kaboomTishPlugin(k: K.KaboomCtx): T.KaboomTishPlugin {
   let bpm = 120;
   let scheduler = beatScheduler(k);
   let masterGain = k.audioCtx.createGain();
@@ -106,17 +103,17 @@ export function kaboomTishPlugin(k: K.KaboomCtx) {
   })
 
   return {
-    tempo(newTempo?: number): number | undefined {
+    tempo(newTempo?: number): number {
       if (newTempo) bpm = newTempo;
-      else return bpm;
+      return bpm;
     },
 
-    beat(opt?: BeatOpt) {
+    beat(opt?: T.BeatCompOpt) {
       const scheduledBeats: number[] = [];
 
       if (!opt) opt = {};
 
-      function transformBeat(beatComp, beat): number {
+      function transformBeat(beatComp: T.BeatComp, beat: number): number {
         let bar = beatComp.bar;
         let subdivision = beatComp.subdivision;
 
