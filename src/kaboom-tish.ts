@@ -152,10 +152,9 @@ export function kaboomTishPlugin(k: K.KaboomCtx) {
             //console.log("beatdiff: " + beatDiff);
             //console.log("scheduling beat " + nextBeat + " at " + nextTime);
 
-            if (this.playAt) {
-              this.playAt(nextTime);
-              scheduledBeats.push(nextTime);
-            }
+            this.trigger("schedule", nextTime);
+
+            scheduledBeats.push(nextTime);
 
             currentB = nextBeat;
             currentT = nextTime;
@@ -183,6 +182,10 @@ export function kaboomTishPlugin(k: K.KaboomCtx) {
             scheduledBeats.shift();
           }
         },
+
+        onSchedule(action: (time: number) => void): K.EventController {
+          return this.on("schedule", action);
+        }
       };
     },
 
@@ -202,7 +205,9 @@ export function kaboomTishPlugin(k: K.KaboomCtx) {
       return {
         id: "plays",
 
-        add() { },
+        add() {
+          this.onSchedule(this.playAt);
+        },
 
         playAt(t: number) {
           let srcNode = ctx.createBufferSource();
