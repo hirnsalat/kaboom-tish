@@ -89,3 +89,11 @@ k.onClick(() => {
   k.addKaboom(k.mousePos());
   audioCtx.resume();
 });
+
+k.onKeyPress("m", () => {
+  if (k.volume() == 0) {
+    k.volume(0.2);
+  } else {
+    k.volume(0);
+  }
+})
