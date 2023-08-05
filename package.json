@@ -1,8 +1,8 @@
 {
 	"name": "kaboom-tish",
 	"scripts": {
-		"build": "esbuild --bundle src/main.js --outfile=www/main.js --minify",
-		"dev": "esbuild --bundle src/main.js --outfile=www/main.js --servedir=www",
+		"build": "esbuild --bundle src/main.js src/examples/*.js --outdir=www/ --minify",
+		"dev": "esbuild --sourcemap --bundle src/main.js src/examples/*.js --outdir=www/ --servedir=www",
 		"bundle": "npm run build && mkdir -p dist && zip -r dist/game.zip www -x \"**/.DS_Store\""
 	},
 	"dependencies": {
