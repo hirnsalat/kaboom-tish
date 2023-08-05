@@ -90,16 +90,16 @@ function beatScheduler(k: K.KaboomCtx): ((bpm: number) => void) {
 export function kaboomTishPlugin(k: K.KaboomCtx): T.KaboomTishPlugin {
   let bpm = 120;
   let scheduler = beatScheduler(k);
-  let masterGain = k.audioCtx.createGain();
+  let masterGainNode = k.audioCtx.createGain();
 
-  masterGain.connect(k.audioCtx.destination);
+  masterGainNode.connect(k.audioCtx.destination);
 
   k.onUpdate(() => {
     scheduler(bpm);
   })
 
   k.onUpdate(() => {
-    masterGain.gain.value = k.volume();
+    masterGainNode.gain.value = k.volume();
   })
 
   return {
@@ -183,6 +183,48 @@ export function kaboomTishPlugin(k: K.KaboomCtx): T.KaboomTishPlugin {
       };
     },
 
+    audio() {
+      let localVolume: number = 1;
+
+      return {
+        id: "audio",
+        inputNode: AudioNode,
+        outputNode: AudioNode,
+        targetNode: AudioNode,
+
+        rewire(target: AudioNode) {
+          if (this.targetNode == target) return;
+          this.targetNode = target;
+          this.outputNode.disconnect();
+          this.outputNode.connect(target);
+        },
+
+        add() {
+          this.outputNode = k.audioCtx.createGain();
+          this.outputNode.connect(masterGainNode);
+          this.inputNode = this.outputNode;
+        },
+
+        update() {
+          this.get("audio").forEach((c) => {
+            c.rewire(this.inputNode);
+          })
+        },
+
+        destroy() {
+          this.outputNode.disconnect();
+        },
+
+        volume(vol?: number): number {
+          if (vol != undefined) {
+            localVolume = vol;
+            this.outputNode.gain.value = vol;
+          }
+          return localVolume;
+        }
+      }
+    },
+
     sound() {
       return {
         id: "sound",
@@ -200,7 +242,7 @@ export function kaboomTishPlugin(k: K.KaboomCtx): T.KaboomTishPlugin {
 
     sample(sound: string | K.SoundData | K.Asset<K.SoundData>, playbackRate?: number) {
       let ctx = k.audioCtx;
-      let destination = masterGain;
+      let destination = masterGainNode;
       let buffer: AudioBuffer;
       // const gainNode = ctx.createGain();
       let schedulerEvent: K.EventController;
@@ -222,12 +264,16 @@ export function kaboomTishPlugin(k: K.KaboomCtx): T.KaboomTishPlugin {
 
       return {
         id: "sample",
-        require: ["sound"],
+        require: ["sound", "audio"],
 
         add() {
           if (this.onSchedule) {
             schedulerEvent = this.onSchedule(playSoundAt);
           }
+        },
+
+        update() {
+          destination = this.inputNode;
         },
 
         destroy() {
