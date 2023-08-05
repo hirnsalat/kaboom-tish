@@ -21,12 +21,13 @@ function resolveSound(
   }
 }
 
+let running = false;
+
 function beatScheduler(k: K.KaboomCtx): ((bpm: number) => void) {
   // debug level 1 -> infrequent events
   // debug level 2 -> log every frame
   let debug = 1;
 
-  let running = false;
   let scheduledUntil = 0;
   let scheduledBeat = 0;
 
@@ -177,7 +178,7 @@ export function kaboomTishPlugin(k: K.KaboomCtx) {
 
         update() {
           this.isBeat = false;
-          if (scheduledBeats[0] < k.audioCtx.currentTime) {
+          if (running && scheduledBeats[0] < k.audioCtx.currentTime) {
             this.isBeat = true;
             scheduledBeats.shift();
           }
