@@ -20,8 +20,9 @@ const dog1 = k.add([
   k.sound(),
   // every sound needs a volume!
   k.audio(),
-  // use beat() to play a sound each beat!
+  // use beat() and playEveryBeat() to play a sound each beat!
   k.beat(),
+  k.playEveryBeat(),
   // sample plays an audio file!
   k.sample("bark", 0.5),
 ]);
@@ -37,6 +38,7 @@ const dog2 = k.add([
   k.audio(),
   // you can subdivide the beat to create different rhythms!
   k.beat({ bar: 4, subdivision: 3 }),
+  k.playEveryBeat(),
   k.sample("bark"),
 ]);
 
@@ -49,6 +51,7 @@ const dog3 = dog2.add([
   k.scale(0.5),
 
   k.beat({ subdivision: 2 }),
+  k.playEveryBeat(),
   k.audio(),
   k.sample("bark", 2),
   k.sound(),
@@ -80,8 +83,6 @@ function barkIndicator(dog) {
 barkIndicator(dog1);
 barkIndicator(dog2);
 barkIndicator(dog3);
-
-dog2.volume(0);
 
 // tempo changes the beats per minute!
 // or in this case, barks per minute!

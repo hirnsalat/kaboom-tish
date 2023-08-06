@@ -156,7 +156,7 @@ export function kaboomTishPlugin(k: K.KaboomCtx): T.KaboomTishPlugin {
             //console.log("beatdiff: " + beatDiff);
             //console.log("scheduling beat " + nextBeat + " at " + nextTime);
 
-            if (this.playSound) this.playSound(nextTime);
+            this.trigger("scheduleBeat", nextTime);
 
             scheduledBeats.push(nextTime);
 
@@ -184,9 +184,13 @@ export function kaboomTishPlugin(k: K.KaboomCtx): T.KaboomTishPlugin {
           if (running && scheduledBeats[0] < k.audioCtx.currentTime) {
             this.isBeat = true;
             scheduledBeats.shift();
+            this.trigger("beat");
           }
         },
 
+        onScheduleBeat(action: (time: number) => void) {
+          this.on("scheduleBeat", action);
+        }
       };
     },
 
@@ -245,8 +249,8 @@ export function kaboomTishPlugin(k: K.KaboomCtx): T.KaboomTishPlugin {
         require: ["sound", "audio"],
 
         add() {
-          if (this.onSchedule) {
-            schedulerEvent = this.onSchedule((time) => {
+          if (this.onScheduleSound) {
+            schedulerEvent = this.onScheduleSound((time) => {
               let gainParam = this.outputNode.gain;
               gainParam.cancelScheduledValues(time);
               // gainParam.setValueAtTime(0, time);
@@ -254,6 +258,7 @@ export function kaboomTishPlugin(k: K.KaboomCtx): T.KaboomTishPlugin {
               gainParam.setTargetAtTime(this.volume(), time, attack / 3);
               gainParam.setTargetAtTime(0, time + attack, decay);
             });
+            this.outputNode.gain.value = 0;
             this.gainManaged = true;
           }
         },
@@ -270,17 +275,35 @@ export function kaboomTishPlugin(k: K.KaboomCtx): T.KaboomTishPlugin {
       }
     },
 
+    playEveryBeat() {
+      let eventController: K.EventController;
+      return {
+        id: "playEveryBeat",
+        require: ["sound", "beat"],
+
+        add() {
+          if (this.onScheduleBeat && this.playSound) {
+            eventController = this.onScheduleBeat(this.playSound);
+          }
+        },
+
+        destroy() {
+          eventController.cancel();
+        },
+      }
+    },
+
     sound() {
       return {
         id: "sound",
 
-        onSchedule(action: (time: number) => void): K.EventController {
-          return this.on("schedule", action);
+        onScheduleSound(action: (time: number) => void): K.EventController {
+          return this.on("scheduleSound", action);
         },
 
         playSound(time?: number) {
           if (!time) time = 0;
-          this.trigger("schedule", time);
+          this.trigger("scheduleSound", time);
         },
       }
     },
@@ -312,8 +335,8 @@ export function kaboomTishPlugin(k: K.KaboomCtx): T.KaboomTishPlugin {
         require: ["sound", "audio"],
 
         add() {
-          if (this.onSchedule) {
-            schedulerEvent = this.onSchedule(playSoundAt);
+          if (this.onScheduleSound) {
+            schedulerEvent = this.onScheduleSound(playSoundAt);
           }
         },
 

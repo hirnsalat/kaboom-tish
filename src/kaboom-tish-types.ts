@@ -23,6 +23,8 @@ export interface KaboomTishPlugin {
   pitch(): any,
   oscillator(): any,
   volumeEnvelope(): any,
+
+  playEveryBeat(): any,
 }
 
 export interface BeatCompOpt {

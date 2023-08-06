@@ -18,6 +18,7 @@ k.add([
   k.pitch(45),
   k.oscillator("sawtooth"),
   k.volumeEnvelope(),
+  k.playEveryBeat(),
 ])
 
 k.volume(0.1);
