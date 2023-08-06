@@ -20,6 +20,7 @@ export interface KaboomTishPlugin {
   sample(sound: KaboomSound): SampleComp,
   sound(): any,
   audio(): any,
+  pitch(): any,
   oscillator(): any,
   volumeEnvelope(): any,
 }

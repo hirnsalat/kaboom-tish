@@ -15,7 +15,8 @@ k.add([
   k.beat({ bar: 4, subdivision: 4 }),
   k.audio(),
   k.sound(),
-  k.oscillator(),
+  k.pitch(45),
+  k.oscillator("sawtooth"),
   k.volumeEnvelope(),
 ])
 

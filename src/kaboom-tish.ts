@@ -329,17 +329,38 @@ export function kaboomTishPlugin(k: K.KaboomCtx): T.KaboomTishPlugin {
       };
     },
 
-    oscillator() {
+    pitch(note?: number) {
+      let basePitch: number = 69; // A4 = 440Hz
+      let pitchParam: AudioParam;
+
+      return {
+        id: "pitch",
+
+        initPitch(base: number, param: AudioParam) {
+          basePitch = base;
+          pitchParam = param;
+          if (note != undefined) {
+            // this is in cents!
+            pitchParam.value = (note - basePitch) * 100;
+          }
+        },
+      }
+    },
+
+    oscillator(shape?: OscillatorType) {
       let oscNode = k.audioCtx.createOscillator();
       let started = false;
 
       return {
         id: "oscillator",
-        require: ["audio"],
+        require: ["audio", "pitch"],
 
         add() {
-          oscNode.type = "sawtooth";
-          oscNode.frequency.value = 55;
+          oscNode.type = shape ? shape : "sine";
+          if (this.initPitch) {
+            this.initPitch(69, oscNode.detune);
+            // oscNode.frequency.value = 220;
+          }
         },
 
         update() {
