@@ -25,6 +25,7 @@ export interface KaboomTishPlugin {
   volumeEnvelope(): any,
 
   playEveryBeat(): any,
+  playEveryBar(offset?: number): any,
 }
 
 export interface BeatCompOpt {

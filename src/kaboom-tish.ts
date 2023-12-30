@@ -156,7 +156,7 @@ export function kaboomTishPlugin(k: K.KaboomCtx): T.KaboomTishPlugin {
             //console.log("beatdiff: " + beatDiff);
             //console.log("scheduling beat " + nextBeat + " at " + nextTime);
 
-            this.trigger("scheduleBeat", nextTime);
+            this.trigger("scheduleBeat", nextTime, nextBeat);
 
             scheduledBeats.push(nextTime);
 
@@ -252,6 +252,7 @@ export function kaboomTishPlugin(k: K.KaboomCtx): T.KaboomTishPlugin {
           if (this.onScheduleSound) {
             schedulerEvent = this.onScheduleSound((time) => {
               let gainParam = this.outputNode.gain;
+              time = time ? time : this.outputNode.context.currentTime + 0.05;
               gainParam.cancelScheduledValues(time);
               // gainParam.setValueAtTime(0, time);
               // gainParam.linearRampToValueAtTime(this.volume(), time + attack);
@@ -284,6 +285,31 @@ export function kaboomTishPlugin(k: K.KaboomCtx): T.KaboomTishPlugin {
         add() {
           if (this.onScheduleBeat && this.playSound) {
             eventController = this.onScheduleBeat(this.playSound);
+          }
+        },
+
+        destroy() {
+          eventController.cancel();
+        },
+      }
+    },
+
+    playEveryBar(offset?: number) {
+      let eventController: K.EventController;
+      let realOffset = offset ? offset : 0
+      return {
+        id: "playEveryBeat",
+        require: ["sound", "beat"],
+
+        add() {
+          if (this.onScheduleBeat && this.playSound) {
+            eventController = this.onScheduleBeat(
+              (time, beat) => {
+                if ((beat - realOffset) % this.subdivision == 0) {
+                  this.playSound(time)
+                }
+              }
+            );
           }
         },
 
